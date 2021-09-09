@@ -138,3 +138,20 @@ for (target_var in c("case", "death", "hosp")) {
         }
     }
 }
+
+# get list of all models
+models <- NULL
+for (target_var in c("case", "death", "hosp")) {
+    as_ofs <- available_as_ofs[[target_var]]
+    for (as_of in as.character(as_ofs)) {
+        for (location in unique(all_forecasts$location)) {
+            file_path <- paste0("static/data/forecasts/",
+                target_var, "_",
+                location, "_",
+                as_of,  ".json")
+            forecasts <- jsonlite::fromJSON(file_path)
+            models <- unique(c(models, names(forecasts)))
+        }
+    }
+}
+writeLines(jsonlite::toJSON(models), "static/data/models.json")

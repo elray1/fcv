@@ -21,13 +21,10 @@ available_as_ofs <- purrr::map(
     function(target_var) {
         if (target_var == "death") {
             first_as_of <- as.Date("2020-04-11")
-            data_start_date <- as.Date("2020-03-01")
         } else if (target_var == "case") {
             first_as_of <- as.Date("2020-08-01")
-            data_start_date <- as.Date("2020-03-01")
         } else {
-            first_as_of <- as.Date("2020-12-05")        
-            data_start_date <- as.Date("2020-10-01")
+            first_as_of <- as.Date("2020-12-05")
         }
         as_ofs <- seq.Date(from = first_as_of, to = last_as_of, by = 7)
         return(as_ofs)
@@ -37,7 +34,7 @@ names(available_as_ofs) <- c("case", "death", "hosp")
 available_as_ofs_json <- jsonlite::toJSON(available_as_ofs)
 writeLines(
     available_as_ofs_json,
-    paste0("data/available_as_ofs.json")
+    paste0("static/data/available_as_ofs.json")
 )
 
 locations_json <- covidData::fips_codes %>%
@@ -52,9 +49,16 @@ writeLines(
 
 for (target_var in c("case", "death", "hosp")) {
     as_ofs <- available_as_ofs[[target_var]]
+    if (target_var == "death") {
+        data_start_date <- as.Date("2020-03-01")
+    } else if (target_var == "case") {
+        data_start_date <- as.Date("2020-03-01")
+    } else {
+        data_start_date <- as.Date("2020-10-01")
+    }
     for (as_of in as.character(as_ofs)) {
         data <- covidData::load_data(
-            as_of = as_of,
+            as_of = as.Date(as_of) + 1,
             temporal_resolution = ifelse(target_var == "hosp", "daily", "weekly"),
             spatial_resolution = c("state", "national"),
             measure = target_var

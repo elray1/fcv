@@ -4,6 +4,7 @@ import locations from '~/assets/locations.json';
 import available_as_ofs from '~/static/data/available_as_ofs.json';
 import current_truth from '~/static/data/truth/case_US_2021-09-04.json';
 import forecasts from '~/static/data/forecasts/case_US_2021-09-04.json';
+import models from '~/static/data/models.json';
 
 export const state = () => ({
     target_variables: target_variables,
@@ -11,11 +12,12 @@ export const state = () => ({
     locations: locations,
     location: "US",
     available_as_ofs: available_as_ofs,
-    as_of_date: "2021-09-04",
+    as_of_date: available_as_ofs.case[available_as_ofs.case.length - 1],
     as_of_truth: current_truth,
-    current_date: "2021-09-04",
+    current_date: available_as_ofs.case[available_as_ofs.case.length - 1],
     current_truth: current_truth,
     forecasts: forecasts,
+    models: models,
     interval_level: 95
 })
 
@@ -101,30 +103,48 @@ export const getters = {
     locations: state => {
         return state.locations
     },
-    // current_truth: state => {
-    //     return state.truth[state.target_var][state.location][state.current_date]
-    // },
-    // as_of_truth: state => {
-    //     return state.truth[state.target_var][state.location][state.as_of_date]
-    // },
     plot_data: (state, getters) => {
         var pd = Object.keys(state.forecasts).map(
             model => {
                 let model_forecasts = state.forecasts[model]
-                return {
-                    x: model_forecasts["target_end_date"],
-                    y: model_forecasts["q0.5"],
-                    type: "scatter",
-                    name: model
-                }
+                return [
+                    {
+                        // point forecast
+                        x: model_forecasts["target_end_date"],
+                        y: model_forecasts["q0.5"],
+                        type: "scatter",
+                        name: model
+                    },
+                    {
+                        // interval forecast -- currently fixed at 50%
+                        x: [].concat(
+                            model_forecasts["target_end_date"],
+                            model_forecasts["target_end_date"].slice().reverse()),
+                        y: [].concat(
+                            model_forecasts["q0.25"],
+                            model_forecasts["q0.75"].slice().reverse()),
+                        fill: "toself",
+                        opacity: 0.3,
+                        line: {color: "transparent"},
+                        type: "scatter",
+                        name: model,
+                        showlegend: false,
+                        hoverinfo: "skip"
+                    }                    
+                ]
             }
         )
+        pd = [].concat(...pd)
         
         pd.push({
-          x: state.current_truth.date,
-          y: state.current_truth.y,
-          type: "scatter",
-          name: "Current Truth"
+            x: state.current_truth.date,
+            y: state.current_truth.y,
+            type: "scatter",
+            mode: "lines",
+            name: "Current Truth",
+            marker: {
+                color: "black"
+            }
         })
         
         if (state.as_of_date != state.current_date) {
@@ -132,7 +152,11 @@ export const getters = {
                 x: state.as_of_truth.date,
                 y: state.as_of_truth.y,
                 type: "scatter",
-                name: "Truth as of " + state.as_of_date                      
+                mode: "lines",
+                name: "Truth as of " + state.as_of_date,
+                marker: {
+                    color: "lightgray"
+                }
             })
         }
 

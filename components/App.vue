@@ -19,7 +19,7 @@
     
     <div id="viz">
       <client-only>
-        <vue-plotly :data="plot_data"></vue-plotly>
+        <vue-plotly :data="plot_data" :layout="plot_layout" :style="plot_style"></vue-plotly>
       </client-only>
     </div>
   </div>
@@ -36,7 +36,14 @@ export default {
   data() {
     return {
       selected_target_variable: 'case',
-      selected_location: 'US'
+      selected_location: 'US',
+      plot_layout: {
+        autosize: true
+      },
+      plot_style: {
+        width: "100%",
+        height: "100%"
+      }
     }
   },
   computed: {
